@@ -40,7 +40,9 @@ struct ContentView: View {
     @State private var scoreTitle = ""
     @State private var score = 0
     @State private var gameWon = false
-    @State private var animationAmount = 0.0
+    @State private var animationAmounts = Array(repeating: 0.0, count: 3)
+    @State private var guessed = false
+    
     var body: some View {
         ZStack(alignment: .top){
             
@@ -69,16 +71,20 @@ struct ContentView: View {
                     VStack(spacing: 50){
                             ForEach(0..<3) { number in
                                 Button {
-                                    withAnimation{
-                                        animationAmount += 180
+                                    withAnimation {
+                                        self.animationAmounts[number] += 180
+                                        guessed = true
                                     }
                                     flagTapped(number)
                                     
                                 }label: {
                                     FlagImage(number: number, countries: countries)
+                                        .opacity(guessed == true && number != correctAnswer ? 0.75 : 1)
+                                        .animation(.easeIn, value: animationAmounts[number])
                                 }
                                 
-                                
+                                .rotation3DEffect(.degrees(animationAmounts[number]), axis: (x: 0, y: 1, z: 0))
+                                .animation(.linear, value: animationAmounts[number])
                                 .alert(scoreTitle, isPresented: $showingScore){
                                     Button("Continue", action: askQuestion)
                                 } message: {
@@ -89,10 +95,13 @@ struct ContentView: View {
                                 } message:{
                                     Text("You Won with: \(HighScore)")
                                 }
+                                
                             }
+                        
                     }
                     .frame(maxHeight: .infinity, alignment: .center)
                     .padding(50)
+                
             }
         }
     }
@@ -119,6 +128,8 @@ struct ContentView: View {
     func askQuestion(){
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
+        animationAmounts = [0.0, 0.0, 0.0]
+        guessed = false
     }
     func resetGame(){
         score = 0
